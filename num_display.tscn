@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://bfbabxhrw6rmt"]
+
+[ext_resource type="Texture2D" uid="uid://dv7jboe7s0ce7" path="res://resource/numbers.png" id="1_sce5v"]
+
+[node name="NumDisplay" type="Sprite2D"]
+texture = ExtResource("1_sce5v")
+centered = false
+hframes = 12
+frame = 10

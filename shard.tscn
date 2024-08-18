@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://c73v4a6to2b6j"]
+
+[ext_resource type="Script" path="res://shard.gd" id="1_1lslp"]
+[ext_resource type="Texture2D" uid="uid://crs1w2lcp768k" path="res://resource/shard.png" id="1_rtbw8"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_q3e0q"]
+radius = 0.5
+
+[node name="Shard" type="Node2D"]
+script = ExtResource("1_1lslp")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("1_rtbw8")
+hframes = 2
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="Shape" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("CircleShape2D_q3e0q")

@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=3 uid="uid://brbeeq7o4yw6w"]
+
+[ext_resource type="Script" path="res://well.gd" id="1_ijtrb"]
+[ext_resource type="Texture2D" uid="uid://cdbpeklxxgf5p" path="res://resource/core.png" id="1_ojnc8"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_mo1ya"]
+radius = 3.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_akt7g"]
+
+[node name="Well" type="Node2D"]
+script = ExtResource("1_ijtrb")
+
+[node name="Core" type="Sprite2D" parent="."]
+texture = ExtResource("1_ojnc8")
+
+[node name="CoreArea" type="Area2D" parent="."]
+
+[node name="Circle" type="CollisionShape2D" parent="CoreArea"]
+shape = SubResource("CircleShape2D_mo1ya")
+
+[node name="WellArea" type="Area2D" parent="."]
+
+[node name="Circle" type="CollisionShape2D" parent="WellArea"]
+shape = SubResource("CircleShape2D_akt7g")
+
+[connection signal="area_entered" from="CoreArea" to="." method="_on_entered_core_area"]
+[connection signal="area_entered" from="WellArea" to="." method="_on_entered_well_area"]

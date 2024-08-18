@@ -1,0 +1,83 @@
+[gd_scene load_steps=8 format=3 uid="uid://cuv2qvpdrep7n"]
+
+[ext_resource type="Script" path="res://game_scene.gd" id="1_3meol"]
+[ext_resource type="PackedScene" uid="uid://brbeeq7o4yw6w" path="res://well.tscn" id="1_jkgmq"]
+[ext_resource type="Texture2D" uid="uid://hywcacmdb47u" path="res://resource/barrier.png" id="2_bt8gv"]
+[ext_resource type="Texture2D" uid="uid://edlsd6ums5ip" path="res://resource/top_hud.png" id="3_wtn7x"]
+[ext_resource type="PackedScene" uid="uid://bfbabxhrw6rmt" path="res://num_display.tscn" id="4_xu2al"]
+[ext_resource type="Texture2D" uid="uid://dgs25h67jrg56" path="res://resource/size_meter.png" id="5_sr6lx"]
+[ext_resource type="Texture2D" uid="uid://cge4ktcw37cbh" path="res://resource/anti_mode.png" id="6_c6uyk"]
+
+[node name="GameScene" type="Node2D"]
+script = ExtResource("1_3meol")
+
+[node name="Barrier" type="Sprite2D" parent="."]
+position = Vector2(128, 0)
+texture = ExtResource("2_bt8gv")
+centered = false
+
+[node name="Well" parent="." instance=ExtResource("1_jkgmq")]
+position = Vector2(30, 79)
+
+[node name="Dust" type="Node2D" parent="."]
+
+[node name="TopHud" type="Sprite2D" parent="."]
+texture = ExtResource("3_wtn7x")
+centered = false
+
+[node name="ScoreDigit0" parent="TopHud" instance=ExtResource("4_xu2al")]
+position = Vector2(213, 5)
+
+[node name="ScoreDigit1" parent="TopHud" instance=ExtResource("4_xu2al")]
+position = Vector2(206, 5)
+
+[node name="ScoreDigit2" parent="TopHud" instance=ExtResource("4_xu2al")]
+position = Vector2(199, 5)
+
+[node name="ScoreDigit3" parent="TopHud" instance=ExtResource("4_xu2al")]
+position = Vector2(192, 5)
+
+[node name="ScoreDigit4" parent="TopHud" instance=ExtResource("4_xu2al")]
+position = Vector2(185, 5)
+
+[node name="ScoreDigit5" parent="TopHud" instance=ExtResource("4_xu2al")]
+position = Vector2(178, 5)
+
+[node name="ScoreDigit6" parent="TopHud" instance=ExtResource("4_xu2al")]
+position = Vector2(171, 5)
+
+[node name="ScoreDigit7" parent="TopHud" instance=ExtResource("4_xu2al")]
+position = Vector2(164, 5)
+
+[node name="ScoreDigit8" parent="TopHud" instance=ExtResource("4_xu2al")]
+position = Vector2(157, 5)
+
+[node name="MultDigit0" parent="TopHud" instance=ExtResource("4_xu2al")]
+position = Vector2(120, 5)
+frame = 1
+
+[node name="MultDigit1" parent="TopHud" instance=ExtResource("4_xu2al")]
+position = Vector2(113, 5)
+
+[node name="MassDigit0" parent="TopHud" instance=ExtResource("4_xu2al")]
+position = Vector2(56, 5)
+frame = 1
+
+[node name="MassDigit1" parent="TopHud" instance=ExtResource("4_xu2al")]
+position = Vector2(49, 5)
+
+[node name="SizeMeter" type="Sprite2D" parent="TopHud"]
+position = Vector2(19, 3)
+texture = ExtResource("5_sr6lx")
+centered = false
+hframes = 12
+frame = 1
+
+[node name="AntiModeLight" type="Sprite2D" parent="TopHud"]
+visible = false
+position = Vector2(15, 13)
+texture = ExtResource("6_c6uyk")
+
+[connection signal="absorbed" from="Well" to="." method="_on_well_absorbed"]
+[connection signal="fractured" from="Well" to="." method="_on_well_fractured"]
+[connection signal="transmit_mass" from="Well" to="." method="_on_transmit_mass"]
