@@ -36,6 +36,8 @@ func _ready():
 	flicker_time["Passthrough"] = 0;
 	flicker_time["MultiArrow"] = 0;
 	flicker_time["MaxMulti"] = 0;
+	flicker_time["Multi"] = 0;
+	flicker_time["Transmit"] = 0;
 	
 func _process(delta):
 	# Screen shake control
@@ -236,6 +238,8 @@ func update_display():
 	$TopHud/MultiArrowLight.visible = Time.get_ticks_msec() % 200 < 100 if flicker_time["MultiArrow"] > 0 else false;
 	$TopHud/PassthroughLight.visible = flicker_time["Passthrough"] > 0;
 	$TopHud/MaxMultiLight.visible = Time.get_ticks_msec() % 100 < 50 if flicker_time["MaxMulti"] > 0 else false;
+	$TopHud/MultiLight.visible = Time.get_ticks_msec() % 200 < 100 if flicker_time["Multi"] > 0 else false;
+	$TopHud/TransmitLight.visible = Time.get_ticks_msec() % 200 < 100 if flicker_time["Transmit"] > 0 else false;
 
 func update_number_display(display_id: String, value: int):
 	var digits = 9 if display_id == "Score" else 2;
@@ -269,9 +273,15 @@ func _on_well_fractured(shard):
 	$Well.die();
 
 func _on_transmit_mass():
-	total_score += mass_count * multiplier;
-	mass_count = 0;
-	# Should multiplier reset here?
-	# I like the act of trying to rebuild your mass while your multiplier is decaying!
-	#multiplier = 1;
-	# TODO: Make a better scoring animation, this should feel good at high numbers!
+	if mass_count > 0:
+		# Do transmit animations
+		flicker_time["Transmit"] = 35;
+		if multiplier > 1:
+			flicker_time["Multi"] = 35;
+		
+		# Score
+		total_score += mass_count * multiplier;
+		mass_count = 0;
+		# Should multiplier reset here?
+		# I like the act of trying to rebuild your mass while your multiplier is decaying!
+		#multiplier = 1;
