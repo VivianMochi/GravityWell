@@ -17,10 +17,13 @@ var top_barrier = 27;
 var bottom_barrier = 131;
 
 # Active ingredients
-var aura_radius: float = 10;
-var aura_radius_desired: float = 10
+var controlled := false;
+var dead := false;
+var aura_radius: float = 2;
+var aura_radius_desired: float = 2;
 var aura_center := Vector2(0, 0);
 var anti_mode := false;
+var orbiting: int = 0;
 
 # For visuals
 var aura_pulse_factor = 0;
@@ -33,37 +36,39 @@ func _process(delta):
 	aura_pulse_factor = wrap(aura_pulse_factor + delta * 0.5, 0, 1.0);
 	
 func tick():
-	# Transition between anti-mode
-	if not anti_mode and Input.is_physical_key_pressed(KEY_SPACE):
-		anti_mode = true
-		transmit_mass.emit();
-		aura_radius = 2;
-		aura_radius_desired = 2;
-	elif anti_mode and not Input.is_physical_key_pressed(KEY_SPACE):
-		anti_mode = false;
-		aura_radius_desired = aura_min;
-	
-	# Boil down inputs
-	var input_right = Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)
-	var input_left = Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)
-	var input_up = Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP)
-	var input_down = Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)
-	
-	# Figure out movement to do this tick
-	var move_speed = base_move_speed * 2 if anti_mode else base_move_speed;
-	var movement := Vector2(0, 0);
-	if input_left :
-		movement.x += clamp(-move_speed, left_barrier - position.x, 0);
-	if input_right:
-		movement.x += clamp(move_speed, 0, right_barrier - position.x);
-	if input_up:
-		movement.y += clamp(-move_speed, top_barrier - position.y, 0);
-	if input_down:
-		movement.y += clamp(move_speed, 0, bottom_barrier - position.y);
-	
-	# Do movement, with aura center lagging behind
-	position += movement;
-	aura_center -= movement;
+	# All input stuff is locked behind controlled
+	if controlled:
+		# Transition between anti-mode
+		if not anti_mode and Input.is_physical_key_pressed(KEY_SPACE):
+			anti_mode = true
+			transmit_mass.emit();
+			aura_radius = 2;
+			aura_radius_desired = 2;
+		elif anti_mode and not Input.is_physical_key_pressed(KEY_SPACE):
+			anti_mode = false;
+			aura_radius_desired = aura_min;
+		
+		# Boil down inputs
+		var input_right = Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)
+		var input_left = Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)
+		var input_up = Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP)
+		var input_down = Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)
+		
+		# Figure out movement to do this tick
+		var move_speed = base_move_speed * 2 if anti_mode else base_move_speed;
+		var movement := Vector2(0, 0);
+		if input_left :
+			movement.x += clamp(-move_speed, left_barrier - position.x, 0);
+		if input_right:
+			movement.x += clamp(move_speed, 0, right_barrier - position.x);
+		if input_up:
+			movement.y += clamp(-move_speed, top_barrier - position.y, 0);
+		if input_down:
+			movement.y += clamp(move_speed, 0, bottom_barrier - position.y);
+		
+		# Do movement, with aura center lagging behind
+		position += movement;
+		aura_center -= movement;
 	
 	# Slowly bring aura_center back towards core
 	aura_center.x *= 0.8;
@@ -92,12 +97,14 @@ func tick():
 			var pull_strength = 100.0 / (offset.length() * offset.length());
 			pull_strength = clamp(pull_strength, 0.1, 1.0);
 			dust.velocity += offset.normalized() * pull_strength;
+			dust.velocity *= 0.98;
 			dust.velocity_changed();
 		elif shard:
 			var offset = position - shard.position;
 			var pull_strength = 50.0 / (offset.length() * offset.length());
 			pull_strength = clamp(pull_strength, 0.1, 0.5);
 			shard.velocity += offset.normalized() * pull_strength;
+			shard.velocity *= 0.99;
 			shard.velocity_changed();
 	
 	# Queue a redraw
@@ -118,17 +125,28 @@ func _draw():
 	draw_arc(aura_center.round(), aura_radius, 0, TAU, 24, Color.hex(0x847e87ff), 1, false);
 
 func _on_entered_well_area(area):
-	pass
+	if area.get_owner() is Shard:
+		orbiting += 1;
+
+func _on_exited_well_area(area):
+	if area.get_owner() is Shard:
+		orbiting -= 1;
 
 func _on_entered_core_area(area):
 	var dust = area.get_owner() as Dust;
 	var shard = area.get_owner() as Shard;
 	if dust:
-		if not anti_mode:
-			aura_radius_desired = clamp(aura_radius_desired + (aura_max - aura_min) / 99.0, aura_min, aura_max);
+		if not anti_mode and controlled:
+			aura_radius_desired = clamp(aura_radius_desired + (aura_max - aura_min) / 100.0, aura_min, aura_max);
 		absorbed.emit(dust);
 	if shard:
 		fractured.emit(shard);
 
-func grow_for_mass(mass_count):
-	pass;
+func die():
+	dead = true;
+	controlled = false;
+	# Also reset for next life;
+	aura_radius = 2;
+	aura_radius_desired = 2;
+	aura_center = Vector2(0, 0);
+	anti_mode = false;

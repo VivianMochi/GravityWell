@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://cuv2qvpdrep7n"]
+[gd_scene load_steps=13 format=3 uid="uid://cuv2qvpdrep7n"]
 
 [ext_resource type="Script" path="res://game_scene.gd" id="1_3meol"]
 [ext_resource type="PackedScene" uid="uid://brbeeq7o4yw6w" path="res://well.tscn" id="1_jkgmq"]
@@ -7,6 +7,11 @@
 [ext_resource type="PackedScene" uid="uid://bfbabxhrw6rmt" path="res://num_display.tscn" id="4_xu2al"]
 [ext_resource type="Texture2D" uid="uid://dgs25h67jrg56" path="res://resource/size_meter.png" id="5_sr6lx"]
 [ext_resource type="Texture2D" uid="uid://cge4ktcw37cbh" path="res://resource/anti_mode.png" id="6_c6uyk"]
+[ext_resource type="Texture2D" uid="uid://hpx32o0ch543" path="res://resource/multibuilder.png" id="8_a0qj3"]
+[ext_resource type="Texture2D" uid="uid://v7dja68plb8t" path="res://resource/multishield.png" id="9_tjese"]
+[ext_resource type="Texture2D" uid="uid://bab0tsc44h40s" path="res://resource/multibar.png" id="10_2e24m"]
+[ext_resource type="Texture2D" uid="uid://1urtn3ah2jl5" path="res://resource/arrow.png" id="11_o2kjl"]
+[ext_resource type="Texture2D" uid="uid://bbj6oex5yocgv" path="res://resource/passthrough.png" id="12_r3rui"]
 
 [node name="GameScene" type="Node2D"]
 script = ExtResource("1_3meol")
@@ -77,6 +82,36 @@ frame = 1
 visible = false
 position = Vector2(15, 13)
 texture = ExtResource("6_c6uyk")
+
+[node name="MultiBuilderLights" type="Sprite2D" parent="TopHud"]
+position = Vector2(70, 12)
+texture = ExtResource("8_a0qj3")
+centered = false
+hframes = 11
+
+[node name="MultiShieldBar" type="Sprite2D" parent="TopHud"]
+position = Vector2(45, 14)
+scale = Vector2(1, 1)
+texture = ExtResource("9_tjese")
+centered = false
+hframes = 2
+
+[node name="MultiBar" type="Sprite2D" parent="TopHud"]
+position = Vector2(1, 17)
+texture = ExtResource("10_2e24m")
+centered = false
+region_enabled = true
+region_rect = Rect2(0, 0, 229, 6)
+
+[node name="MultiArrowLight" type="Sprite2D" parent="TopHud"]
+position = Vector2(92, 11)
+texture = ExtResource("11_o2kjl")
+centered = false
+
+[node name="PassthroughLight" type="Sprite2D" parent="TopHud"]
+position = Vector2(146, 12)
+texture = ExtResource("12_r3rui")
+centered = false
 
 [connection signal="absorbed" from="Well" to="." method="_on_well_absorbed"]
 [connection signal="fractured" from="Well" to="." method="_on_well_fractured"]

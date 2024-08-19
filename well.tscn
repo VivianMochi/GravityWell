@@ -26,3 +26,4 @@ shape = SubResource("CircleShape2D_akt7g")
 
 [connection signal="area_entered" from="CoreArea" to="." method="_on_entered_core_area"]
 [connection signal="area_entered" from="WellArea" to="." method="_on_entered_well_area"]
+[connection signal="area_exited" from="WellArea" to="." method="_on_exited_well_area"]
