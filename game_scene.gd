@@ -52,7 +52,7 @@ func _process(delta):
 		# Game state control
 		if playing and $Well.dead:
 			end_game();
-		if Input.is_physical_key_pressed(KEY_SPACE) and (prepping or results):
+		if (Input.is_physical_key_pressed(KEY_SPACE) or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)) and (prepping or results):
 			start_game();
 		
 		# Decide when to tick

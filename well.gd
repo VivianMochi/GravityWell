@@ -28,6 +28,9 @@ var orbiting: int = 0;
 # For visuals
 var aura_pulse_factor = 0;
 
+# Mouse control
+var mouse_enabled: bool = false;
+
 func _ready():
 	pass;
 
@@ -38,13 +41,14 @@ func _process(delta):
 func tick():
 	# All input stuff is locked behind controlled
 	if controlled:
-		# Transition between anti-mode
-		if not anti_mode and Input.is_physical_key_pressed(KEY_SPACE):
+		# Transition in and out of anti-mode
+		var input_anti = Input.is_physical_key_pressed(KEY_SPACE) or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT);
+		if not anti_mode and input_anti:
 			anti_mode = true
 			transmit_mass.emit();
 			aura_radius = 2;
 			aura_radius_desired = 2;
-		elif anti_mode and not Input.is_physical_key_pressed(KEY_SPACE):
+		elif anti_mode and not input_anti:
 			anti_mode = false;
 			aura_radius_desired = aura_min;
 		
@@ -54,10 +58,32 @@ func tick():
 		var input_up = Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP)
 		var input_down = Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)
 		
+		# Determine mouse input
+		if input_right or input_left or input_down or input_up:
+			mouse_enabled = false;
+		elif Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+			mouse_enabled = true;
+		if mouse_enabled:
+			# Code for smooth-ish diagonal movement, it's not that great but it works well enough
+			# Figure out if angle of movement is mainly x or y direction, the majority axis gets full movement
+			# Throttle the other axis's movement by 50%
+			var mouse_offset = get_viewport().get_mouse_position() - position;
+			var mouse_atan = atan2(abs(mouse_offset.y), abs(mouse_offset.x)) / (PI / 2.0);
+			var x_control = mouse_atan <= 0.55 or Time.get_ticks_msec() % 2;
+			var y_control = mouse_atan >= 0.45 or Time.get_ticks_msec() % 2;
+			if mouse_offset.x > 1 and x_control:
+				input_right = true;
+			if mouse_offset.x < -1 and x_control:
+				input_left = true;
+			if mouse_offset.y > 1 and y_control:
+				input_down = true;
+			if mouse_offset.y < -1 and y_control:
+				input_up = true;
+		
 		# Figure out movement to do this tick
 		var move_speed = base_move_speed * 2 if anti_mode else base_move_speed;
 		var movement := Vector2(0, 0);
-		if input_left :
+		if input_left:
 			movement.x += clamp(-move_speed, left_barrier - position.x, 0);
 		if input_right:
 			movement.x += clamp(move_speed, 0, right_barrier - position.x);
