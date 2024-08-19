@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://cuv2qvpdrep7n"]
+[gd_scene load_steps=14 format=3 uid="uid://cuv2qvpdrep7n"]
 
 [ext_resource type="Script" path="res://game_scene.gd" id="1_3meol"]
 [ext_resource type="PackedScene" uid="uid://brbeeq7o4yw6w" path="res://well.tscn" id="1_jkgmq"]
@@ -12,6 +12,7 @@
 [ext_resource type="Texture2D" uid="uid://bab0tsc44h40s" path="res://resource/multibar.png" id="10_2e24m"]
 [ext_resource type="Texture2D" uid="uid://1urtn3ah2jl5" path="res://resource/arrow.png" id="11_o2kjl"]
 [ext_resource type="Texture2D" uid="uid://bbj6oex5yocgv" path="res://resource/passthrough.png" id="12_r3rui"]
+[ext_resource type="Texture2D" uid="uid://df4rgudlvrafr" path="res://resource/max_multi.png" id="13_83i6j"]
 
 [node name="GameScene" type="Node2D"]
 script = ExtResource("1_3meol")
@@ -91,7 +92,6 @@ hframes = 11
 
 [node name="MultiShieldBar" type="Sprite2D" parent="TopHud"]
 position = Vector2(45, 14)
-scale = Vector2(1, 1)
 texture = ExtResource("9_tjese")
 centered = false
 hframes = 2
@@ -111,6 +111,11 @@ centered = false
 [node name="PassthroughLight" type="Sprite2D" parent="TopHud"]
 position = Vector2(146, 12)
 texture = ExtResource("12_r3rui")
+centered = false
+
+[node name="MaxMultiLight" type="Sprite2D" parent="TopHud"]
+position = Vector2(228, 0)
+texture = ExtResource("13_83i6j")
 centered = false
 
 [connection signal="absorbed" from="Well" to="." method="_on_well_absorbed"]

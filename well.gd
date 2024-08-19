@@ -105,6 +105,9 @@ func tick():
 			pull_strength = clamp(pull_strength, 0.1, 0.5);
 			shard.velocity += offset.normalized() * pull_strength;
 			shard.velocity *= 0.99;
+			shard.pull_time += 1;
+			if shard.pull_time == shard.CHARGE_DELAY + 1:
+				orbiting += 1;
 			shard.velocity_changed();
 	
 	# Queue a redraw
@@ -125,11 +128,14 @@ func _draw():
 	draw_arc(aura_center.round(), aura_radius, 0, TAU, 24, Color.hex(0x847e87ff), 1, false);
 
 func _on_entered_well_area(area):
-	if area.get_owner() is Shard:
+	# Only consider charged shards as orbiting
+	var shard = area.get_owner() as Shard;
+	if shard and shard.pull_time > shard.CHARGE_DELAY:
 		orbiting += 1;
 
 func _on_exited_well_area(area):
-	if area.get_owner() is Shard:
+	var shard = area.get_owner() as Shard;
+	if shard and shard.pull_time > shard.CHARGE_DELAY:
 		orbiting -= 1;
 
 func _on_entered_core_area(area):

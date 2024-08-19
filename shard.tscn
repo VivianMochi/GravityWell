@@ -11,7 +11,7 @@ script = ExtResource("1_1lslp")
 
 [node name="Sprite" type="Sprite2D" parent="."]
 texture = ExtResource("1_rtbw8")
-hframes = 2
+hframes = 3
 
 [node name="Area2D" type="Area2D" parent="."]
 

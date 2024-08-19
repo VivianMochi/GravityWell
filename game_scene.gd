@@ -34,7 +34,8 @@ func _ready():
 	# Set up some stuff
 	$Well.right_barrier = $Barrier.position.x - 3;
 	flicker_time["Passthrough"] = 0;
-	flicker_time["MultiArrow"] = 0
+	flicker_time["MultiArrow"] = 0;
+	flicker_time["MaxMulti"] = 0;
 	
 func _process(delta):
 	# Screen shake control
@@ -61,11 +62,14 @@ func _process(delta):
 			tick();
 
 func tick():
-	# Debug
-	if Input.is_physical_key_pressed(KEY_1):
+	# Debug keys
+	var debug_enabled = true;
+	if debug_enabled and Input.is_physical_key_pressed(KEY_1):
 		var new_dust = preload("res://dust.tscn").instantiate();
 		$Dust.add_child(new_dust);
 		new_dust.position = $Well.position;
+	if debug_enabled and Input.is_physical_key_pressed(KEY_2):
+		multiplier = move_toward(multiplier, 99, 1);
 	
 	# Tick flicker times
 	for light in flicker_time:
@@ -73,7 +77,7 @@ func tick():
 	
 	# Multiplier decay
 	if multiplier_shield > 0:
-		multiplier_shield = move_toward(multiplier_shield, 0, clamp(floor(multiplier * 0.5) + 1, 1, 10));
+		multiplier_shield = move_toward(multiplier_shield, 0, clamp(round(multiplier * 0.1) + 1, 1, 10));
 	else:
 		multiplier_progress = move_toward(multiplier_progress, 0, 1);
 		if playing and multiplier_progress <= 0 and multiplier > 1:
@@ -117,10 +121,16 @@ func tick():
 	if $Well.orbiting > 0 and multiplier_shield > 0:
 		multiplier_progress += $Well.orbiting;
 		if multiplier_progress >= 100:
-			multiplier += 1;
-			multiplier_progress = 1;
-			multiplier_shield = 100;
-			flicker_time["MultiArrow"] = 25;
+			if multiplier < 99:
+				multiplier += 1;
+				multiplier_progress = 1;
+				multiplier_shield = 100;
+				flicker_time["MultiArrow"] = 25;
+			else:
+				# Burn multiplier into score for being maxxed
+				total_score += multiplier_progress - 100;
+				multiplier_progress = 100;
+				flicker_time["MaxMulti"] = 10;
 	
 	# Update score
 	var score_increment = ceil(abs(total_score - total_score_display_value) / 10.0);
@@ -225,6 +235,7 @@ func update_display():
 	# Update lights from flicker control
 	$TopHud/MultiArrowLight.visible = Time.get_ticks_msec() % 200 < 100 if flicker_time["MultiArrow"] > 0 else false;
 	$TopHud/PassthroughLight.visible = flicker_time["Passthrough"] > 0;
+	$TopHud/MaxMultiLight.visible = Time.get_ticks_msec() % 100 < 50 if flicker_time["MaxMulti"] > 0 else false;
 
 func update_number_display(display_id: String, value: int):
 	var digits = 9 if display_id == "Score" else 2;
@@ -252,7 +263,7 @@ func _on_well_absorbed(dust):
 	dust.queue_free();
 
 func _on_well_fractured(shard):
-	shard.queue_free();
+	#shard.queue_free();
 	hit_freeze = 0.5;
 	shake_time = 0.25;
 	$Well.die();
@@ -260,5 +271,7 @@ func _on_well_fractured(shard):
 func _on_transmit_mass():
 	total_score += mass_count * multiplier;
 	mass_count = 0;
-	multiplier = 1;
+	# Should multiplier reset here?
+	# I like the act of trying to rebuild your mass while your multiplier is decaying!
+	#multiplier = 1;
 	# TODO: Make a better scoring animation, this should feel good at high numbers!
