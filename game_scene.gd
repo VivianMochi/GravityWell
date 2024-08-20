@@ -48,7 +48,18 @@ func _ready():
 	flicker_time["Transmit"] = 0;
 	
 	$BeatMusic.volume_db = linear_to_db(0.0);
-	
+
+func _input(event):
+	# Music control
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_M:
+			if $MenuMusic.playing:
+				$MenuMusic.stop();
+				$BeatMusic.stop();
+			else:
+				$MenuMusic.play();
+				$BeatMusic.play();
+
 func _process(delta):
 	# Screen shake control
 	if shake_time > 0:
@@ -98,7 +109,7 @@ func tick():
 		next_wave();
 	
 	# Debug keys
-	var debug_enabled = true;
+	var debug_enabled = false;
 	if debug_enabled and Input.is_physical_key_pressed(KEY_1):
 		var new_dust = preload("res://dust.tscn").instantiate();
 		$Dust.add_child(new_dust);
@@ -380,12 +391,13 @@ func _on_transmit_mass():
 
 func next_wave():
 	wave += 1;
-	
 	var enemy_count = 1;
 	for i in range(enemy_count):
 		var new_enemy = preload("res://target.tscn").instantiate();
 		$Enemies.add_child(new_enemy);
-		new_enemy.generate_move_logic(2, 150);
+		new_enemy.generate_move_logic(1 if wave <= 3 else 2, 100);
+		if wave == 1:
+			new_enemy.patrol_points[0] = Vector2(200, 79);
 		new_enemy.explode.connect(_on_enemy_exploded.bind(new_enemy));
 
 func _on_enemy_exploded(empower_level, enemy):

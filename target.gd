@@ -14,15 +14,18 @@ var idle_time: int = 0;
 var animation_time: int = 0;
 
 func generate_move_logic(total_points: int, stationary_time: int):
+	patrol_points.clear()
+	
 	total_points = max(total_points, 1)
 	for i in range(total_points):
 		patrol_points.push_back(generate_point());
 	max_idle_time = stationary_time;
 	
 	# Also move the target off-screen so it can slide in
-	position = patrol_points[0] + Vector2(100, 0);
+	position = patrol_points[0] + Vector2(100, randf() * 20);
 
 func generate_attack_logic(attack_interval: int, attack_while_moving: bool):
+	# Didn't get this done in time :(
 	pass;
 
 func _ready():
@@ -49,8 +52,9 @@ func tick():
 		if move_offset.y < -1 and y_control:
 			movement.y -= 1;
 		position += movement;
-	else:
-		# Stationary for a time
+	
+	# Stationary for a time
+	if move_offset.length() < 10:
 		idle_time += 1;
 		if idle_time > max_idle_time:
 			idle_time = 0;
