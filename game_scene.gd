@@ -9,6 +9,7 @@ var wave: int = 0;
 var ticks_since_start: int = 0;
 var dust_density: float = 0.1;
 var shard_percentage: float = 0.0;
+var kill_grace: int = 0;
 
 # Mass stuff
 var mass_count: int = 0;
@@ -46,6 +47,8 @@ func _ready():
 	flicker_time["Multi"] = 0;
 	flicker_time["Transmit"] = 0;
 	
+	$BeatMusic.volume_db = linear_to_db(0.0);
+	
 func _process(delta):
 	# Screen shake control
 	if shake_time > 0:
@@ -53,6 +56,12 @@ func _process(delta):
 		position = Vector2(randf() * 2 - 1,randf() * 2 - 1);
 	else:
 		position = Vector2();
+	
+	# Control volume
+	if hit_freeze > 0:
+		$OrbitingSound.volume_db = linear_to_db(0.0);
+	else:
+		$OrbitingSound.volume_db = linear_to_db(1.0 if $Well.orbiting > 3 else $Well.orbiting * 0.3)
 	
 	# Freeze control, then tick
 	if hit_freeze > 0:
@@ -78,6 +87,8 @@ func tick():
 		shard_percentage = 0.01;
 	if dust_density < 0.2 and mass_count >= 99:
 		dust_density = 0.2;
+	
+	kill_grace = move_toward(kill_grace, 0, 1);
 	
 	# Start the first wave after getting +1 multiplier
 	if kills == 0 and wave == 0 and multiplier > 1:
@@ -120,7 +131,7 @@ func tick():
 	
 	# Tick all dust
 	for dust in $Dust.get_children():
-		if dust as Dust and dust.homing:
+		if dust is Dust and dust.homing:
 			dust.velocity += ($Well.position - dust.position).normalized() * 0.05;
 			dust.velocity *= 0.98;
 			dust.velocity_changed();
@@ -130,6 +141,8 @@ func tick():
 			dust.queue_free();
 		if dust.position.y < -100 or dust.position.y > 235:
 			dust.queue_free();
+		if dust is Shard and dust.pull_time == dust.CHARGE_DELAY:
+			$ChargeSound.play();
 	
 	# Create new dust
 	if randf() <= dust_density:
@@ -138,7 +151,7 @@ func tick():
 		new_dust.position = Vector2(250, 25 + randf() * 110);
 		new_dust.velocity = Vector2(lerp(-1, -2, randf()), lerp(-0.2, 0.2, randf()));
 		new_dust.velocity_changed();
-	if randf() <= shard_percentage:
+	if kill_grace == 0 and randf() <= (shard_percentage if mass_count > 50 else shard_percentage * 2.0):
 		var new_shard = preload("res://shard.tscn").instantiate();
 		$Dust.add_child(new_shard);
 		new_shard.position = Vector2(250, 25 + randf() * 110);
@@ -186,6 +199,10 @@ func start_game():
 	results = false;
 	playing = true;
 	
+	# Sound
+	#$MenuMusic.playing = false;
+	$TargetHitSound.play();
+	
 	# Reset player
 	$Well.position = Vector2(30, 79);
 	$Well.dead = false;
@@ -194,8 +211,9 @@ func start_game():
 	# Reset area
 	wave = 0;
 	ticks_since_start = 0;
-	dust_density = 0.1;
-	shard_percentage = 0.0;
+	# These feel better as "unlocks"
+	#dust_density = 0.1;
+	#shard_percentage = 0.0;
 	
 	# Reset hud
 	mass_count = 0;
@@ -227,6 +245,9 @@ func end_game():
 		new_dust.position = explosion_position;
 		new_dust.velocity = Vector2(lerp(-4.0, 4.0, randf()), lerp(-4.0, 4.0, randf()));
 		new_dust.velocity_changed();
+	
+	# Sound
+	$ExplosionSound.play();
 	
 	# Update displays
 	mass_count = 0;
@@ -319,6 +340,12 @@ func _on_well_absorbed(dust):
 	
 	# Destroy the dust
 	dust.queue_free();
+	
+	# Sounds
+	$CollectSound.pitch_scale = 0.7 + mass_count * 0.3 / 99.0;
+	$CollectSound.play();
+	if mass_count == 99:
+		$CollectSoundFull.play();
 
 func _on_well_fractured(shard):
 	if shard.empowered:
@@ -339,6 +366,10 @@ func _on_transmit_mass():
 		flicker_time["Transmit"] = 35;
 		if multiplier > 1:
 			flicker_time["Multi"] = 35;
+		
+		# Sound
+		$TransmitSound.volume_db = linear_to_db(0.5 + mass_count * 0.5 / 99.0);
+		$TransmitSound.play();
 		
 		# Score
 		total_score += mass_count * multiplier;
@@ -368,6 +399,11 @@ func _on_enemy_exploded(empower_level, enemy):
 	new_shard.velocity = Vector2(-0.6, lerp(-0.2, 0.2, randf()));
 	new_shard.velocity_changed();
 	
+	# Hit sound
+	$TargetHitSound.pitch_scale = 0.9 + empower_level * 0.1;
+	$TargetHitSound.play();
+	$BeatMusic.volume_db = linear_to_db(0.5);
+	
 	# Create explosion
 	for i in range(99):
 		var new_dust = preload("res://dust.tscn").instantiate();
@@ -382,6 +418,7 @@ func _on_enemy_exploded(empower_level, enemy):
 	
 	# Register the kill
 	kills += 1;
+	kill_grace = 90;
 
 func _on_well_empowered_pulse(shard):
 	for i in range(5 * shard.empower_level):
@@ -391,3 +428,14 @@ func _on_well_empowered_pulse(shard):
 		new_dust.homing = true;
 		new_dust.velocity = Vector2(lerp(-1.0, 1.0, randf()), lerp(-1.0, 1.0, randf())) + shard.velocity;
 		new_dust.velocity_changed();
+
+func _on_menu_music_finished():
+	$MenuMusic.play();
+	$BeatMusic.play();
+
+func _on_orbiting_sound_finished():
+	$OrbitingSound.play();
+
+func _on_beat_music_finished():
+	$BeatMusic.volume_db = linear_to_db(clamp(db_to_linear($BeatMusic.volume_db) - 0.1, 0, 1.0));
+	$BeatMusic.play();

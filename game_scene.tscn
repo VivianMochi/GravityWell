@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://cuv2qvpdrep7n"]
+[gd_scene load_steps=25 format=3 uid="uid://cuv2qvpdrep7n"]
 
 [ext_resource type="Script" path="res://game_scene.gd" id="1_3meol"]
 [ext_resource type="PackedScene" uid="uid://brbeeq7o4yw6w" path="res://well.tscn" id="1_jkgmq"]
@@ -15,6 +15,15 @@
 [ext_resource type="Texture2D" uid="uid://df4rgudlvrafr" path="res://resource/max_multi.png" id="13_83i6j"]
 [ext_resource type="Texture2D" uid="uid://bfye3q7pavgib" path="res://resource/multiplier_light.png" id="14_ka677"]
 [ext_resource type="Texture2D" uid="uid://dm1s204as6qbp" path="res://resource/transmit_light.png" id="15_rmnbk"]
+[ext_resource type="AudioStream" uid="uid://ngbonjg1ean8" path="res://resource/menu_theme.ogg" id="16_83bnh"]
+[ext_resource type="AudioStream" uid="uid://crjs4c0nr7ko1" path="res://resource/collect.wav" id="17_x024d"]
+[ext_resource type="AudioStream" uid="uid://hswd41wx1yo1" path="res://resource/collect_full.wav" id="18_0f6uc"]
+[ext_resource type="AudioStream" uid="uid://dfis4q3ix5uye" path="res://resource/charge.wav" id="19_mujpw"]
+[ext_resource type="AudioStream" uid="uid://crgmexdn6b21h" path="res://resource/orbiting.wav" id="20_xl48e"]
+[ext_resource type="AudioStream" uid="uid://dgyhd3pxrokjw" path="res://resource/transmit.wav" id="21_66eqy"]
+[ext_resource type="AudioStream" uid="uid://cvwskr60hsu36" path="res://resource/explosion.wav" id="22_hejhq"]
+[ext_resource type="AudioStream" uid="uid://osi1kq46mca4" path="res://resource/target_hit.wav" id="23_542tv"]
+[ext_resource type="AudioStream" uid="uid://4w86n1cdcjql" path="res://resource/beat.ogg" id="24_2ntrj"]
 
 [node name="GameScene" type="Node2D"]
 script = ExtResource("1_3meol")
@@ -133,7 +142,40 @@ position = Vector2(139, 3)
 texture = ExtResource("15_rmnbk")
 centered = false
 
+[node name="MenuMusic" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("16_83bnh")
+autoplay = true
+
+[node name="CollectSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("17_x024d")
+
+[node name="CollectSoundFull" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("18_0f6uc")
+
+[node name="ChargeSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("19_mujpw")
+
+[node name="OrbitingSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("20_xl48e")
+autoplay = true
+
+[node name="TransmitSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("21_66eqy")
+
+[node name="ExplosionSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("22_hejhq")
+
+[node name="TargetHitSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("23_542tv")
+
+[node name="BeatMusic" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("24_2ntrj")
+autoplay = true
+
 [connection signal="absorbed" from="Well" to="." method="_on_well_absorbed"]
 [connection signal="empowered_pulse" from="Well" to="." method="_on_well_empowered_pulse"]
 [connection signal="fractured" from="Well" to="." method="_on_well_fractured"]
 [connection signal="transmit_mass" from="Well" to="." method="_on_transmit_mass"]
+[connection signal="finished" from="MenuMusic" to="." method="_on_menu_music_finished"]
+[connection signal="finished" from="OrbitingSound" to="." method="_on_orbiting_sound_finished"]
+[connection signal="finished" from="BeatMusic" to="." method="_on_beat_music_finished"]
