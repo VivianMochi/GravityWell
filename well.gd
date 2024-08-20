@@ -4,6 +4,7 @@ extends Node2D
 signal absorbed(dust);
 signal transmit_mass;
 signal fractured(shard);
+signal empowered_pulse(shard);
 
 # Stat control
 var aura_min = 10;
@@ -134,6 +135,8 @@ func tick():
 			shard.pull_time += 1;
 			if shard.pull_time == shard.CHARGE_DELAY + 1:
 				orbiting += 1;
+			if shard.empowered and shard.pull_time % 30 == 0:
+				empowered_pulse.emit(shard);
 			shard.velocity_changed();
 	
 	# Queue a redraw

@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3 uid="uid://cc1bjvl1u4s05"]
+
+[ext_resource type="Texture2D" uid="uid://dk5t6yovakewq" path="res://resource/target.png" id="1_hmsya"]
+[ext_resource type="Script" path="res://target.gd" id="1_nqpos"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_exnc4"]
+
+[node name="Target" type="Node2D"]
+script = ExtResource("1_nqpos")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("1_hmsya")
+hframes = 6
+frame = 1
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="Shape" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("CircleShape2D_exnc4")
+
+[connection signal="area_entered" from="Area2D" to="." method="_on_area_entered"]

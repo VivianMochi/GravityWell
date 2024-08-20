@@ -27,6 +27,8 @@ centered = false
 [node name="Well" parent="." instance=ExtResource("1_jkgmq")]
 position = Vector2(30, 79)
 
+[node name="Enemies" type="Node2D" parent="."]
+
 [node name="Dust" type="Node2D" parent="."]
 
 [node name="TopHud" type="Sprite2D" parent="."]
@@ -95,7 +97,7 @@ hframes = 11
 position = Vector2(45, 14)
 texture = ExtResource("9_tjese")
 centered = false
-hframes = 2
+hframes = 3
 
 [node name="MultiBar" type="Sprite2D" parent="TopHud"]
 position = Vector2(1, 17)
@@ -108,6 +110,7 @@ region_rect = Rect2(0, 0, 229, 6)
 position = Vector2(92, 11)
 texture = ExtResource("11_o2kjl")
 centered = false
+vframes = 2
 
 [node name="PassthroughLight" type="Sprite2D" parent="TopHud"]
 position = Vector2(146, 12)
@@ -118,6 +121,7 @@ centered = false
 position = Vector2(228, 0)
 texture = ExtResource("13_83i6j")
 centered = false
+hframes = 2
 
 [node name="MultiLight" type="Sprite2D" parent="TopHud"]
 position = Vector2(96, 4)
@@ -130,5 +134,6 @@ texture = ExtResource("15_rmnbk")
 centered = false
 
 [connection signal="absorbed" from="Well" to="." method="_on_well_absorbed"]
+[connection signal="empowered_pulse" from="Well" to="." method="_on_well_empowered_pulse"]
 [connection signal="fractured" from="Well" to="." method="_on_well_fractured"]
 [connection signal="transmit_mass" from="Well" to="." method="_on_transmit_mass"]

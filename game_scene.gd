@@ -5,6 +5,8 @@ var ticks_per_second: int = 30;
 var tick_timer: float = 0;
 
 # Area rules
+var wave: int = 0;
+var ticks_since_start: int = 0;
 var dust_density: float = 0.1;
 var shard_percentage: float = 0.0;
 
@@ -15,10 +17,15 @@ var mass_count: int = 0;
 var multiplier: int = 1;
 var multiplier_progress: int = 0;
 var multiplier_shield: int = 0;
+var frenzy_time: int = 0;
+var frenzy_time_start: int = 0;
 
 # Score stuff
 var total_score: int = 0;
 var total_score_display_value: int = 0;
+
+# Hidden score
+var kills: int = 0;
 
 # Gameplay control
 var prepping := true;
@@ -64,6 +71,21 @@ func _process(delta):
 			tick();
 
 func tick():
+	ticks_since_start += 1;
+	
+	# Gameplay control
+	if shard_percentage < 0.01 and mass_count >= 10:
+		shard_percentage = 0.01;
+	if dust_density < 0.2 and mass_count >= 99:
+		dust_density = 0.2;
+	
+	# Start the first wave after getting +1 multiplier
+	if kills == 0 and wave == 0 and multiplier > 1:
+		next_wave();
+	# Start a new wave when all enemies are killed
+	elif kills > 0 and $Enemies.get_children().size() == 0:
+		next_wave();
+	
 	# Debug keys
 	var debug_enabled = true;
 	if debug_enabled and Input.is_physical_key_pressed(KEY_1):
@@ -72,6 +94,9 @@ func tick():
 		new_dust.position = $Well.position;
 	if debug_enabled and Input.is_physical_key_pressed(KEY_2):
 		multiplier = move_toward(multiplier, 99, 1);
+	if debug_enabled and Input.is_physical_key_pressed(KEY_3):
+		if not $Enemies.get_children().is_empty():
+			$Enemies.get_children()[0].explode.emit(1);
 	
 	# Tick flicker times
 	for light in flicker_time:
@@ -89,8 +114,16 @@ func tick():
 	# Tick the gravity well
 	$Well.tick();
 	
+	# Tick enemies
+	for enemy in $Enemies.get_children():
+		enemy.tick();
+	
 	# Tick all dust
 	for dust in $Dust.get_children():
+		if dust as Dust and dust.homing:
+			dust.velocity += ($Well.position - dust.position).normalized() * 0.05;
+			dust.velocity *= 0.98;
+			dust.velocity_changed();
 		dust.tick();
 		# Clean up dust that's drifted
 		if dust.position.x < -100 or dust.position.x > 340:
@@ -100,18 +133,17 @@ func tick():
 	
 	# Create new dust
 	if randf() <= dust_density:
-		if randf() <= shard_percentage:
-			var new_shard = preload("res://shard.tscn").instantiate();
-			$Dust.add_child(new_shard);
-			new_shard.position = Vector2(250, randf() * 135);
-			new_shard.velocity = Vector2(lerp(-1, -2, randf()), lerp(-0.2, 0.2, randf()));
-			new_shard.velocity_changed();
-		else:
-			var new_dust = preload("res://dust.tscn").instantiate();
-			$Dust.add_child(new_dust);
-			new_dust.position = Vector2(250, randf() * 135);
-			new_dust.velocity = Vector2(lerp(-1, -2, randf()), lerp(-0.2, 0.2, randf()));
-			new_dust.velocity_changed();
+		var new_dust = preload("res://dust.tscn").instantiate();
+		$Dust.add_child(new_dust);
+		new_dust.position = Vector2(250, 25 + randf() * 110);
+		new_dust.velocity = Vector2(lerp(-1, -2, randf()), lerp(-0.2, 0.2, randf()));
+		new_dust.velocity_changed();
+	if randf() <= shard_percentage:
+		var new_shard = preload("res://shard.tscn").instantiate();
+		$Dust.add_child(new_shard);
+		new_shard.position = Vector2(250, 25 + randf() * 110);
+		new_shard.velocity = Vector2(lerp(-1, -2, randf()), lerp(-0.2, 0.2, randf()));
+		new_shard.velocity_changed();
 	
 	# Fade in the barrier when nearby
 	$Barrier.modulate.a = clamp(($Well.position.x - $Barrier.position.x + 10) / 10.0, 0.02, 1) if playing else 0;
@@ -119,20 +151,27 @@ func tick():
 	if $Barrier.position.y > 4:
 		$Barrier.position.y = 0;
 	
+	# Frenzy control
+	if frenzy_time > 0:
+		frenzy_time -= 1;
+		multiplier_progress += 5;
+		multiplier_shield = 100;
+	
 	# Multiplier growth from satellites, only when multiplier is shielded
 	if $Well.orbiting > 0 and multiplier_shield > 0:
 		multiplier_progress += $Well.orbiting;
-		if multiplier_progress >= 100:
-			if multiplier < 99:
-				multiplier += 1;
-				multiplier_progress = 1;
-				multiplier_shield = 100;
-				flicker_time["MultiArrow"] = 25;
-			else:
-				# Burn multiplier into score for being maxxed
-				total_score += multiplier_progress - 100;
-				multiplier_progress = 100;
-				flicker_time["MaxMulti"] = 10;
+	
+	if multiplier_progress >= 100:
+		if multiplier < 99:
+			multiplier += 1;
+			multiplier_progress = 1;
+			multiplier_shield = 100;
+			flicker_time["MultiArrow"] = 25;
+		else:
+			# Burn multiplier into score for being maxxed
+			total_score += multiplier_progress - 100;
+			multiplier_progress = 100;
+			flicker_time["MaxMulti"] = 10;
 	
 	# Update score
 	var score_increment = ceil(abs(total_score - total_score_display_value) / 10.0);
@@ -153,16 +192,24 @@ func start_game():
 	$Well.controlled = true;
 	
 	# Reset area
+	wave = 0;
+	ticks_since_start = 0;
 	dust_density = 0.1;
-	shard_percentage = 0.1;
+	shard_percentage = 0.0;
 	
 	# Reset hud
 	mass_count = 0;
 	multiplier = 1;
 	multiplier_progress = 0;
 	multiplier_shield = 0;
+	frenzy_time = 0;
 	total_score = 0;
 	total_score_display_value = 0;
+	kills = 0;
+	
+	# Destroy all enemies cleanly
+	for enemy in $Enemies.get_children():
+		enemy.queue_free();
 
 func end_game():
 	# Game state change
@@ -206,7 +253,11 @@ func update_display():
 		update_number_display("Mass", mass_count);
 	
 	# Update multiplier shield display
-	if multiplier_shield > 0:
+	if frenzy_time > 0:
+		$TopHud/MultiShieldBar.visible = true;
+		$TopHud/MultiShieldBar.frame = 2;
+		$TopHud/MultiShieldBar.scale.x = 17.0 * frenzy_time / frenzy_time_start;
+	elif multiplier_shield > 0:
 		$TopHud/MultiShieldBar.visible = true;
 		$TopHud/MultiShieldBar.frame = 0;
 		$TopHud/MultiShieldBar.scale.x = round(multiplier_shield * 17.0 / 100.0);
@@ -218,13 +269,16 @@ func update_display():
 	else:
 		$TopHud/MultiShieldBar.visible = false;
 	
-	# Update multiplier builder lights
-	$TopHud/MultiBuilderLights.frame = $Well.orbiting;
+	# Update a few multiplier related lights
+	$TopHud/MultiBuilderLights.frame = clamp($Well.orbiting, 0, 10);
+	$TopHud/MultiArrowLight.frame = 1 if frenzy_time > 0 else 0;
+	$TopHud/MaxMultiLight.frame = 1 if frenzy_time > 0 else 0;
 	
 	# Update multiplier bar
 	if multiplier_progress > 0:
 		$TopHud/MultiBar.visible = true;
 		$TopHud/MultiBar.region_rect.size.x = 2 + round(227 * multiplier_progress / 100.0);
+		$TopHud/MultiBar.region_rect.position.y = 6 if frenzy_time > 0 else 0;
 	else:
 		$TopHud/MultiBar.visible = false;
 	
@@ -267,10 +321,17 @@ func _on_well_absorbed(dust):
 	dust.queue_free();
 
 func _on_well_fractured(shard):
-	#shard.queue_free();
-	hit_freeze = 0.5;
-	shake_time = 0.25;
-	$Well.die();
+	if shard.empowered:
+		shard.queue_free();
+		frenzy_time_start = 100 * shard.empower_level;
+		frenzy_time = frenzy_time_start;
+		for dust in $Dust.get_children():
+			if dust is Dust:
+				dust.homing = true;
+	else:
+		hit_freeze = 0.5;
+		shake_time = 0.25;
+		$Well.die();
 
 func _on_transmit_mass():
 	if mass_count > 0:
@@ -285,3 +346,48 @@ func _on_transmit_mass():
 		# Should multiplier reset here?
 		# I like the act of trying to rebuild your mass while your multiplier is decaying!
 		#multiplier = 1;
+
+func next_wave():
+	wave += 1;
+	
+	var enemy_count = 1;
+	for i in range(enemy_count):
+		var new_enemy = preload("res://target.tscn").instantiate();
+		$Enemies.add_child(new_enemy);
+		new_enemy.generate_move_logic(2, 150);
+		new_enemy.explode.connect(_on_enemy_exploded.bind(new_enemy));
+
+func _on_enemy_exploded(empower_level, enemy):
+	# Create the empowered drop
+	var new_shard = preload("res://shard.tscn").instantiate();
+	$Dust.add_child.call_deferred(new_shard);
+	new_shard.position = enemy.position;
+	new_shard.empowered = true;
+	new_shard.empower_level = empower_level;
+	new_shard.CHARGE_DELAY = -1;
+	new_shard.velocity = Vector2(-0.6, lerp(-0.2, 0.2, randf()));
+	new_shard.velocity_changed();
+	
+	# Create explosion
+	for i in range(99):
+		var new_dust = preload("res://dust.tscn").instantiate();
+		$Dust.add_child.call_deferred(new_dust);
+		new_dust.position = enemy.position;
+		new_dust.homing = true;
+		new_dust.velocity = Vector2(lerp(-4.0, 4.0, randf()), lerp(-4.0, 4.0, randf()));
+		new_dust.velocity_changed();
+	
+	# Delete the enemy
+	enemy.queue_free();
+	
+	# Register the kill
+	kills += 1;
+
+func _on_well_empowered_pulse(shard):
+	for i in range(5 * shard.empower_level):
+		var new_dust = preload("res://dust.tscn").instantiate();
+		$Dust.add_child.call_deferred(new_dust);
+		new_dust.position = shard.position;
+		new_dust.homing = true;
+		new_dust.velocity = Vector2(lerp(-1.0, 1.0, randf()), lerp(-1.0, 1.0, randf())) + shard.velocity;
+		new_dust.velocity_changed();
